@@ -696,31 +696,33 @@ int main(int argc, char** argv)
     }
     else if( cmd == CMD_RANDOM ) { 
         int cnt = blink1_getCachedCount();
-        if( arg==0 ) arg = 1;
-        if( cnt>1 ) blink1_close(dev); // close global device, open as needed
+        if(arg == 0) arg = 1;
+        if(cnt > 1) blink1_close(dev); // close global device, open as needed
         msg("random %d times: \n", arg);
-        for( int i=0; i<arg; i++ ) { 
-            uint8_t r = rand()%255;
-            uint8_t g = rand()%255;
-            uint8_t b = rand()%255 ;
-            uint8_t id = rand() % blink1_getCachedCount();
+        for(int i = 0; i < arg; i++) {
+            uint8_t r = rand() % 255;
+            uint8_t g = rand() % 255;
+            uint8_t b = rand() % 255;
+            //uint8_t id = rand() % blink1_getCachedCount();
+            for (int j = 0; j < numDevicesToUse; j++) {
+                uint8_t id = deviceIds[j];
 
-            msg("%d: %d/%d : %2.2x,%2.2x,%2.2x \n", 
-                i, id, blink1_getCachedCount(), r,g,b);
+                msg("%d: %d/%d : %2.2x,%2.2x,%2.2x \n",
+                    i, id, blink1_getCachedCount(), r,g,b);
 
-            blink1_device* mydev = dev;
-            if( cnt > 1 ) mydev = blink1_openById( id );
-            if( ledn == 0 ) { 
-                rc = blink1_fadeToRGB(mydev, millis,r,g,b);
-            } else {
-                uint8_t n = 1 + rand() % ledn;
-                rc = blink1_fadeToRGBN(mydev, millis,r,g,b,n);
+                blink1_device* mydev = blink1_openById(id);
+                if( ledn == 0 ) {
+                    rc = blink1_fadeToRGB(mydev, millis,r,g,b);
+                } else {
+                    //uint8_t n = 1 + rand() % ledn;
+                    rc = blink1_fadeToRGBN(mydev, millis,r,g,b,ledn);
+                }
+                if(rc == -1 && !quiet) { // on error, do something, anything.
+                    printf("error during random\n");
+                    //break;
+                }
+                blink1_close(mydev);
             }
-            if( rc == -1 && !quiet ) { // on error, do something, anything.
-                printf("error during random\n");
-                //break;
-            }
-            if( cnt > 1 ) blink1_close( mydev );
             
             blink1_sleep(delayMillis);
         }
